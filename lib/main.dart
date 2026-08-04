@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'pages/home_page.dart';
+
+import 'pages/main_shell.dart';
 
 void main() {
   runApp(const MintoraApp());
@@ -19,7 +20,7 @@ class MintoraApp extends StatelessWidget {
           seedColor: const Color(0xFF67C78F),
         ),
       ),
-      home: const HomePage(),
+      home: const MainShell(),
     );
   }
 }
