@@ -1,10 +1,39 @@
 import 'package:flutter/material.dart';
+import '../database/record_repository.dart';
+import '../models/record_model.dart';
 
 class RecordPage extends StatelessWidget {
   const RecordPage({super.key});
 
   static const Color darkGreen = Color(0xFF174C3C);
   static const Color pageBackground = Color(0xFFF6FBF8);
+   Future<void> _saveRecord({
+    required BuildContext context,
+    required RecordCategory category,
+    required String title,
+    required String description,
+  }) async {
+    final record = RecordModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      category: category,
+      title: title,
+      description: description,
+      createdAt: DateTime.now(),
+      growthPoints: 1,
+    );
+
+    await RecordRepository.instance.addRecord(record);
+    if (!context.mounted) {
+  return;
+}
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title saved'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +116,12 @@ class RecordPage extends StatelessWidget {
 
             return InkWell(
               onTap: () {
+                _saveRecord(
+  context: context,
+  category: RecordCategory.mood,
+  title: item.label,
+  description: item.subtitle,
+);
                 showModalBottomSheet<void>(
                   context: context,
                   showDragHandle: true,

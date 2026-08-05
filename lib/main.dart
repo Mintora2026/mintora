@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-
+import 'database/record_repository.dart';
 import 'pages/main_shell.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await RecordRepository.instance.loadRecords();
+
   runApp(const MintoraApp());
 }
-
 class MintoraApp extends StatelessWidget {
   const MintoraApp({super.key});
 
