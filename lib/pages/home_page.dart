@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../database/record_repository.dart';
+import '../models/record_model.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -8,8 +11,12 @@ class HomePage extends StatelessWidget {
   static const Color lightGreen = Color(0xFFE7F6ED);
   static const Color pageBackground = Color(0xFFF6FBF8);
 
+  static const int dailyActivityGoal = 7;
+
   @override
   Widget build(BuildContext context) {
+    final repository = RecordRepository.instance;
+
     return Scaffold(
       backgroundColor: pageBackground,
       appBar: AppBar(
@@ -33,42 +40,86 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGreeting(),
-              const SizedBox(height: 22),
-              _buildGrowthCard(),
-              const SizedBox(height: 28),
-              _buildSectionTitle('Quick Record'),
-              const SizedBox(height: 14),
-              _buildQuickRecordGrid(context),
-              const SizedBox(height: 28),
-              _buildSectionTitle('Your Growth Tree'),
-              const SizedBox(height: 14),
-              _buildGrowthTreeCard(),
-            ],
-          ),
+        child: AnimatedBuilder(
+          animation: repository,
+          builder: (context, child) {
+            final todayRecords = _getTodayRecords(repository.getAll());
+            final completedActivities = todayRecords.length;
+            final todayGrowthPoints = todayRecords.fold<int>(
+              0,
+              (sum, record) => sum + record.growthPoints,
+            );
+
+            final progress =
+                (completedActivities / dailyActivityGoal).clamp(0.0, 1.0);
+            final percentage = (progress * 100).round();
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildGreeting(),
+                  const SizedBox(height: 22),
+                  _buildGrowthCard(
+                    completedActivities: completedActivities,
+                    percentage: percentage,
+                    progress: progress,
+                    growthPoints: todayGrowthPoints,
+                  ),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('Quick Record'),
+                  const SizedBox(height: 14),
+                  _buildQuickRecordGrid(context),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('Your Growth Tree'),
+                  const SizedBox(height: 14),
+                  _buildGrowthTreeCard(
+                    completedActivities: completedActivities,
+                    growthPoints: todayGrowthPoints,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
+  List<RecordModel> _getTodayRecords(List<RecordModel> records) {
+    final now = DateTime.now();
+
+    return records.where((record) {
+      final date = record.createdAt;
+
+      return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    }).toList();
+  }
+
   Widget _buildGreeting() {
-    return const Column(
+    final hour = DateTime.now().hour;
+
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 18
+            ? 'Good afternoon'
+            : 'Good evening';
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Good afternoon',
-          style: TextStyle(
+          greeting,
+          style: const TextStyle(
             color: Colors.black54,
             fontSize: 14,
           ),
         ),
-        SizedBox(height: 4),
-        Text(
+        const SizedBox(height: 4),
+        const Text(
           'Welcome back, Viola',
           style: TextStyle(
             color: darkGreen,
@@ -80,7 +131,12 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildGrowthCard() {
+  Widget _buildGrowthCard({
+    required int completedActivities,
+    required int percentage,
+    required double progress,
+    required int growthPoints,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -95,12 +151,12 @@ class HomePage extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(26),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Text(
                   "Today's Growth",
                   style: TextStyle(
@@ -111,8 +167,8 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               Text(
-                '68%',
-                style: TextStyle(
+                '$percentage%',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 25,
                   fontWeight: FontWeight.w800,
@@ -120,22 +176,24 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            'You completed 5 of 7 daily activities.',
-            style: TextStyle(
+            completedActivities == 1
+                ? 'You completed 1 activity and earned $growthPoints growth point today.'
+                : 'You completed $completedActivities activities and earned $growthPoints growth points today.',
+            style: const TextStyle(
               color: Colors.white70,
               fontSize: 14,
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.circular(20),
             child: LinearProgressIndicator(
-              value: 0.68,
+              value: progress,
               minHeight: 10,
               backgroundColor: Colors.white24,
-              valueColor: AlwaysStoppedAnimation<Color>(
+              valueColor: const AlwaysStoppedAnimation<Color>(
                 Color(0xFF9EE76B),
               ),
             ),
@@ -254,7 +312,19 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildGrowthTreeCard() {
+  Widget _buildGrowthTreeCard({
+    required int completedActivities,
+    required int growthPoints,
+  }) {
+    final remaining =
+        (dailyActivityGoal - completedActivities).clamp(0, dailyActivityGoal);
+
+    final message = completedActivities >= dailyActivityGoal
+        ? 'You reached today’s activity goal. Your tree is thriving.'
+        : remaining == 1
+            ? 'Complete one more activity today to help your tree grow.'
+            : 'Complete $remaining more activities today to help your tree grow.';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -262,23 +332,23 @@ class HomePage extends StatelessWidget {
         color: lightGreen,
         borderRadius: BorderRadius.circular(26),
       ),
-      child: const Row(
+      child: Row(
         children: [
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.white,
             child: Icon(
-              Icons.park_rounded,
+              _treeIcon(growthPoints),
               color: mintGreen,
               size: 58,
             ),
           ),
-          SizedBox(width: 18),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Your tree is growing',
                   style: TextStyle(
                     color: darkGreen,
@@ -286,10 +356,10 @@ class HomePage extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Complete one more activity today to help your tree grow.',
-                  style: TextStyle(
+                  message,
+                  style: const TextStyle(
                     color: Color(0xFF557268),
                     height: 1.4,
                     fontSize: 14,
@@ -301,6 +371,18 @@ class HomePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _treeIcon(int growthPoints) {
+    if (growthPoints >= 7) {
+      return Icons.park_rounded;
+    }
+
+    if (growthPoints >= 3) {
+      return Icons.eco_rounded;
+    }
+
+    return Icons.spa_rounded;
   }
 }
 
