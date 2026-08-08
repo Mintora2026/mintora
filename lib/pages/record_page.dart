@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../database/record_repository.dart';
 import '../models/record_model.dart';
+import 'exercise_page.dart';
+import 'finance_page.dart';
+import 'health_page.dart';
+import 'mood_page.dart';
+import 'sleep_page.dart';
+import 'study_page.dart';
+import 'water_page.dart';
+import 'work_page.dart';
 
 class RecordPage extends StatelessWidget {
   const RecordPage({super.key});
@@ -162,7 +170,9 @@ class RecordPage extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: darkGreen,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                    ),
                   ),
                   child: const Text(
                     'Save',
@@ -272,6 +282,86 @@ class RecordPage extends StatelessWidget {
 
             return InkWell(
               onTap: () {
+                if (item.category == RecordCategory.mood) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MoodPage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.sleep) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SleepPage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.work) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WorkPage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.study) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StudyPage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.finance) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FinancePage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.health) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HealthPage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.exercise) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ExercisePage(),
+                    ),
+                  );
+                  return;
+                }
+
+                if (item.category == RecordCategory.water) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WaterPage(),
+                    ),
+                  );
+                  return;
+                }
+
                 _openRecordForm(
                   context: context,
                   item: item,

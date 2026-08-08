@@ -32,10 +32,27 @@ class RecordRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// ⭐ NEW
+  Future<void> updateRecord(RecordModel record) async {
+    await DatabaseHelper.instance.updateRecord(record);
+
+    final index = _records.indexWhere(
+      (existingRecord) => existingRecord.id == record.id,
+    );
+
+    if (index != -1) {
+      _records[index] = record;
+    }
+
+    notifyListeners();
+  }
+
   Future<void> removeRecord(String id) async {
     await DatabaseHelper.instance.deleteRecord(id);
 
-    _records.removeWhere((record) => record.id == id);
+    _records.removeWhere(
+      (record) => record.id == id,
+    );
 
     notifyListeners();
   }
@@ -51,5 +68,8 @@ class RecordRepository extends ChangeNotifier {
   int get totalRecords => _records.length;
 
   int get totalGrowthPoints =>
-      _records.fold(0, (sum, record) => sum + record.growthPoints);
+      _records.fold(
+        0,
+        (sum, record) => sum + record.growthPoints,
+      );
 }

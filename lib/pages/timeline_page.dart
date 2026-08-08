@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../database/record_repository.dart';
 import '../models/record_model.dart';
+import '../services/insight_service.dart';
+import '../widgets/ai_insight_card.dart';
+import '../widgets/date_header.dart';
+import '../widgets/timeline_card.dart';
+import 'record_detail_page.dart';
 
-class TimelinePage extends StatelessWidget {
+class TimelinePage extends StatefulWidget {
   const TimelinePage({super.key});
 
   static const Color darkGreen = Color(0xFF174C3C);
@@ -12,29 +17,58 @@ class TimelinePage extends StatelessWidget {
   static const Color softBorder = Color(0xFFE6EFE9);
 
   @override
+  State<TimelinePage> createState() => _TimelinePageState();
+}
+
+class _TimelinePageState extends State<TimelinePage> {
+  final TextEditingController _searchController =
+      TextEditingController();
+
+  RecordCategory? _selectedCategory;
+  bool _showSearch = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final repository = RecordRepository.instance;
+    final insightService = InsightService.instance;
 
     return Scaffold(
-      backgroundColor: pageBackground,
+      backgroundColor: TimelinePage.pageBackground,
       appBar: AppBar(
-        backgroundColor: pageBackground,
+        backgroundColor: TimelinePage.pageBackground,
         elevation: 0,
         centerTitle: false,
         title: const Text(
           'Timeline',
           style: TextStyle(
-            color: darkGreen,
+            color: TimelinePage.darkGreen,
             fontSize: 24,
             fontWeight: FontWeight.w800,
           ),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.search_rounded,
-              color: darkGreen,
+            tooltip: _showSearch ? 'Close search' : 'Search',
+            onPressed: () {
+              setState(() {
+                _showSearch = !_showSearch;
+
+                if (!_showSearch) {
+                  _searchController.clear();
+                }
+              });
+            },
+            icon: Icon(
+              _showSearch
+                  ? Icons.close_rounded
+                  : Icons.search_rounded,
+              color: TimelinePage.darkGreen,
             ),
           ),
           const SizedBox(width: 8),
@@ -44,10 +78,24 @@ class TimelinePage extends StatelessWidget {
         child: AnimatedBuilder(
           animation: repository,
           builder: (context, child) {
-            final records = repository.getAll();
+            final allRecords = [...repository.getAll()]
+              ..sort(
+                (a, b) => b.createdAt.compareTo(
+                  a.createdAt,
+                ),
+              );
+
+            final filteredRecords = _filterRecords(
+              allRecords,
+            );
 
             return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                110,
+              ),
               children: [
                 const Text(
                   'Your life, organized by time.',
@@ -56,18 +104,35 @@ class TimelinePage extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildDateHeader(),
+
+                if (_showSearch) ...[
+                  const SizedBox(height: 18),
+                  _buildSearchField(),
+                ],
+
                 const SizedBox(height: 18),
-                if (records.isEmpty)
-                  const _EmptyTimeline()
-                else
-                  ...List.generate(
-                    records.length,
-                    (index) => _TimelineItem(
-                      record: records[index],
-                      isLast: index == records.length - 1,
+
+                _buildCategoryFilters(),
+
+                if (allRecords.isNotEmpty) ...[
+                  const SizedBox(height: 22),
+                  AiInsightCard(
+                    title: 'Timeline Insight',
+                    message: insightService.buildTimelineInsight(
+                      allRecords,
                     ),
+                  ),
+                ],
+
+                const SizedBox(height: 26),
+
+                if (allRecords.isEmpty)
+                  const _EmptyTimeline()
+                else if (filteredRecords.isEmpty)
+                  _buildNoResults()
+                else
+                  ..._buildTimelineSections(
+                    filteredRecords,
                   ),
               ],
             );
@@ -77,201 +142,304 @@ class TimelinePage extends StatelessWidget {
     );
   }
 
-  Widget _buildDateHeader() {
-    final now = DateTime.now();
-
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 58,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(
-              Radius.circular(16),
-            ),
-            border: Border.fromBorderSide(
-              BorderSide(color: softBorder),
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                now.day.toString().padLeft(2, '0'),
-                style: const TextStyle(
-                  color: darkGreen,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+  Widget _buildSearchField() {
+    return TextField(
+      controller: _searchController,
+      autofocus: true,
+      onChanged: (value) {
+        setState(() {});
+      },
+      decoration: InputDecoration(
+        hintText: 'Search your timeline...',
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: TimelinePage.mintGreen,
+        ),
+        suffixIcon: _searchController.text.isEmpty
+            ? null
+            : IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {});
+                },
+                icon: const Icon(
+                  Icons.clear_rounded,
                 ),
               ),
-              Text(
-                _monthName(now.month),
-                style: const TextStyle(
-                  color: mintGreen,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(
+            color: TimelinePage.softBorder,
           ),
         ),
-        const SizedBox(width: 14),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Today',
-              style: TextStyle(
-                color: darkGreen,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              _weekdayName(now.weekday),
-              style: const TextStyle(
-                color: Color(0xFF7A8C84),
-                fontSize: 13,
-              ),
-            ),
-          ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(
+            color: TimelinePage.softBorder,
+          ),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(
+            color: TimelinePage.mintGreen,
+            width: 2,
+          ),
+        ),
+      ),
     );
   }
 
-  static String _monthName(int month) {
-    const months = [
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC',
+  Widget _buildCategoryFilters() {
+    final categories = <_FilterOption>[
+      const _FilterOption(
+        label: 'All',
+        category: null,
+        icon: Icons.apps_rounded,
+      ),
+      const _FilterOption(
+        label: 'Mood',
+        category: RecordCategory.mood,
+        icon: Icons.sentiment_satisfied_alt_rounded,
+      ),
+      const _FilterOption(
+        label: 'Sleep',
+        category: RecordCategory.sleep,
+        icon: Icons.bedtime_outlined,
+      ),
+      const _FilterOption(
+        label: 'Work',
+        category: RecordCategory.work,
+        icon: Icons.work_outline_rounded,
+      ),
+      const _FilterOption(
+        label: 'Study',
+        category: RecordCategory.study,
+        icon: Icons.menu_book_rounded,
+      ),
+      const _FilterOption(
+        label: 'Finance',
+        category: RecordCategory.finance,
+        icon: Icons.account_balance_wallet_outlined,
+      ),
+      const _FilterOption(
+        label: 'Health',
+        category: RecordCategory.health,
+        icon: Icons.favorite_border_rounded,
+      ),
+      const _FilterOption(
+        label: 'Exercise',
+        category: RecordCategory.exercise,
+        icon: Icons.directions_run_rounded,
+      ),
+      const _FilterOption(
+        label: 'Water',
+        category: RecordCategory.water,
+        icon: Icons.water_drop_outlined,
+      ),
     ];
 
-    return months[month - 1];
-  }
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final option = categories[index];
 
-  static String _weekdayName(int weekday) {
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
+          final selected =
+              _selectedCategory == option.category;
 
-    return weekdays[weekday - 1];
-  }
-}
-
-class _TimelineItem extends StatelessWidget {
-  final RecordModel record;
-  final bool isLast;
-
-  const _TimelineItem({
-    required this.record,
-    required this.isLast,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final visual = _categoryVisual(record.category);
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 54,
-            child: Column(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: visual.color.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    visual.icon,
-                    color: visual.color,
-                    size: 23,
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 7),
-                      color: const Color(0xFFDDE9E2),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: TimelinePage.softBorder,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            record.title,
-                            style: const TextStyle(
-                              color: TimelinePage.darkGreen,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          _formatTime(record.createdAt),
-                          style: const TextStyle(
-                            color: Color(0xFF86958F),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 9),
-                    Text(
-                      record.description,
-                      style: const TextStyle(
-                        color: Color(0xFF5F716A),
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
+          return InkWell(
+            onTap: () {
+              setState(() {
+                _selectedCategory = option.category;
+              });
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: AnimatedContainer(
+              duration: const Duration(
+                milliseconds: 180,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+              ),
+              decoration: BoxDecoration(
+                color: selected
+                    ? TimelinePage.darkGreen
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: selected
+                      ? TimelinePage.darkGreen
+                      : TimelinePage.softBorder,
                 ),
               ),
+              child: Row(
+                children: [
+                  Icon(
+                    option.icon,
+                    size: 17,
+                    color: selected
+                        ? Colors.white
+                        : TimelinePage.mintGreen,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    option.label,
+                    style: TextStyle(
+                      color: selected
+                          ? Colors.white
+                          : TimelinePage.darkGreen,
+                      fontSize: 13,
+                      fontWeight: selected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  List<RecordModel> _filterRecords(
+    List<RecordModel> records,
+  ) {
+    final query =
+        _searchController.text.trim().toLowerCase();
+
+    return records.where((record) {
+      final categoryMatches =
+          _selectedCategory == null ||
+              record.category == _selectedCategory;
+
+      if (!categoryMatches) {
+        return false;
+      }
+
+      if (query.isEmpty) {
+        return true;
+      }
+
+      final title = record.title.toLowerCase();
+      final description =
+          record.description.toLowerCase();
+
+      return title.contains(query) ||
+          description.contains(query);
+    }).toList();
+  }
+
+  List<Widget> _buildTimelineSections(
+    List<RecordModel> records,
+  ) {
+    final grouped = _groupRecordsByDate(
+      records,
+    );
+
+    final widgets = <Widget>[];
+
+    for (final entry in grouped.entries) {
+      final date = entry.key;
+      final dayRecords = entry.value;
+
+      widgets.add(
+        DateHeader(
+          date: date,
+          recordCount: dayRecords.length,
+        ),
+      );
+
+      widgets.add(
+        const SizedBox(height: 16),
+      );
+
+      for (final record in dayRecords) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(
+              bottom: 14,
+            ),
+            child: TimelineCard(
+              record: record,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RecordDetailPage(
+                      record: record,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+
+      widgets.add(
+        const SizedBox(height: 12),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _buildNoResults() {
+    final hasSearch =
+        _searchController.text.trim().isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 42,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: TimelinePage.softBorder,
+        ),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.search_off_rounded,
+            color: TimelinePage.mintGreen,
+            size: 44,
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'No matching records',
+            style: TextStyle(
+              color: TimelinePage.darkGreen,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasSearch
+                ? 'Try a different search or category.'
+                : 'No records found in this category.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF6B7D75),
+              fontSize: 14,
+              height: 1.4,
             ),
           ),
         ],
@@ -279,72 +447,29 @@ class _TimelineItem extends StatelessWidget {
     );
   }
 
-  static String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour;
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour == 0
-        ? 12
-        : hour > 12
-            ? hour - 12
-            : hour;
+  static Map<DateTime, List<RecordModel>>
+      _groupRecordsByDate(
+    List<RecordModel> records,
+  ) {
+    final grouped =
+        <DateTime, List<RecordModel>>{};
 
-    return '$displayHour:$minute $period';
-  }
+    for (final record in records) {
+      final date = DateTime(
+        record.createdAt.year,
+        record.createdAt.month,
+        record.createdAt.day,
+      );
 
-  static _CategoryVisual _categoryVisual(RecordCategory category) {
-    switch (category) {
-      case RecordCategory.mood:
-        return const _CategoryVisual(
-          icon: Icons.sentiment_satisfied_alt_rounded,
-          color: Color(0xFFFFB85C),
-        );
-      case RecordCategory.sleep:
-        return const _CategoryVisual(
-          icon: Icons.bedtime_outlined,
-          color: Color(0xFF7A91E8),
-        );
-      case RecordCategory.work:
-        return const _CategoryVisual(
-          icon: Icons.work_outline_rounded,
-          color: Color(0xFF70A8F5),
-        );
-      case RecordCategory.study:
-        return const _CategoryVisual(
-          icon: Icons.menu_book_rounded,
-          color: Color(0xFFA78BF0),
-        );
-      case RecordCategory.finance:
-        return const _CategoryVisual(
-          icon: Icons.account_balance_wallet_outlined,
-          color: Color(0xFF64CFA1),
-        );
-      case RecordCategory.health:
-        return const _CategoryVisual(
-          icon: Icons.favorite_border_rounded,
-          color: Color(0xFFFF8A8A),
-        );
-      case RecordCategory.exercise:
-        return const _CategoryVisual(
-          icon: Icons.directions_run_rounded,
-          color: Color(0xFFFF9F68),
-        );
-      case RecordCategory.water:
-        return const _CategoryVisual(
-          icon: Icons.water_drop_outlined,
-          color: Color(0xFF62B8F6),
-        );
-      case RecordCategory.memory:
-        return const _CategoryVisual(
-          icon: Icons.photo_album_outlined,
-          color: Color(0xFFE58BC8),
-        );
-      case RecordCategory.other:
-        return const _CategoryVisual(
-          icon: Icons.auto_awesome_rounded,
-          color: TimelinePage.mintGreen,
-        );
+      grouped.putIfAbsent(
+        date,
+        () => [],
+      );
+
+      grouped[date]!.add(record);
     }
+
+    return grouped;
   }
 }
 
@@ -398,12 +523,14 @@ class _EmptyTimeline extends StatelessWidget {
   }
 }
 
-class _CategoryVisual {
+class _FilterOption {
+  final String label;
+  final RecordCategory? category;
   final IconData icon;
-  final Color color;
 
-  const _CategoryVisual({
+  const _FilterOption({
+    required this.label,
+    required this.category,
     required this.icon,
-    required this.color,
   });
 }

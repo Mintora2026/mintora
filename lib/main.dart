@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'database/record_repository.dart';
 import 'pages/main_shell.dart';
+import 'pages/onboarding/onboarding_page.dart';
+import 'pages/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await RecordRepository.instance.loadRecords();
 
-  runApp(const MintoraApp());
+  final preferences = await SharedPreferences.getInstance();
+
+  final hasCompletedOnboarding =
+      preferences.getBool('hasCompletedOnboarding') ?? false;
+
+  runApp(
+    MintoraApp(
+      hasCompletedOnboarding: hasCompletedOnboarding,
+    ),
+  );
 }
+
 class MintoraApp extends StatelessWidget {
-  const MintoraApp({super.key});
+  final bool hasCompletedOnboarding;
+
+  const MintoraApp({
+    super.key,
+    required this.hasCompletedOnboarding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +42,11 @@ class MintoraApp extends StatelessWidget {
           seedColor: const Color(0xFF67C78F),
         ),
       ),
-      home: const MainShell(),
+      home: SplashPage(
+        nextPage: hasCompletedOnboarding
+            ? const MainShell()
+            : const OnboardingPage(),
+      ),
     );
   }
 }

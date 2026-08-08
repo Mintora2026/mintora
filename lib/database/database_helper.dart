@@ -75,7 +75,19 @@ class DatabaseHelper {
       return RecordModel.fromMap(convertedMap);
     }).toList();
   }
+Future<void> updateRecord(RecordModel record) async {
+  final db = await database;
 
+  final map = record.toMap();
+  map['isCompleted'] = record.isCompleted ? 1 : 0;
+
+  await db.update(
+    recordsTable,
+    map,
+    where: 'id = ?',
+    whereArgs: [record.id],
+  );
+}
   Future<void> deleteRecord(String id) async {
     final db = await database;
 

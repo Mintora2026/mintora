@@ -15,8 +15,7 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
   path_provider: ^2.1.3
-  
-
+  shared_preferences: ^2.5.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,3 +26,6 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/animations/
+    - assets/mascot/
+    - assets/tree/
