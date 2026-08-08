@@ -6,14 +6,20 @@ import '../../database/record_repository.dart';
 import '../../models/record_model.dart';
 import '../../services/media_service.dart';
 
-class AddMemoryPage extends StatefulWidget {
-  const AddMemoryPage({super.key});
+class EditMemoryPage extends StatefulWidget {
+  final RecordModel memory;
+
+  const EditMemoryPage({
+    super.key,
+    required this.memory,
+  });
 
   @override
-  State<AddMemoryPage> createState() => _AddMemoryPageState();
+  State<EditMemoryPage> createState() =>
+      _EditMemoryPageState();
 }
 
-class _AddMemoryPageState extends State<AddMemoryPage> {
+class _EditMemoryPageState extends State<EditMemoryPage> {
   static const Color darkGreen = Color(0xFF174C3C);
   static const Color mintGreen = Color(0xFF67C78F);
   static const Color pageBackground = Color(0xFFF6FBF8);
@@ -31,28 +37,83 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
   final TextEditingController _tagsController =
       TextEditingController();
 
-  DateTime _selectedDate = DateTime.now();
-
-  bool _isFavorite = false;
-  bool _isSaving = false;
-  bool _isPickingMedia = false;
+  late DateTime _selectedDate;
+  late bool _isFavorite;
 
   String? _mediaPath;
+  String? _originalMediaPath;
+
+  bool _isSaving = false;
+  bool _isPickingMedia = false;
+  bool _didSave = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController.text =
+        widget.memory.title;
+
+    _descriptionController.text =
+        widget.memory.description;
+
+    _locationController.text =
+        widget.memory.location ?? '';
+
+    _tagsController.text =
+        widget.memory.tags.join(', ');
+
+    _selectedDate =
+        widget.memory.createdAt;
+
+    _isFavorite =
+        widget.memory.isFavorite;
+
+    _mediaPath =
+        widget.memory.mediaPath;
+
+    _originalMediaPath =
+        widget.memory.mediaPath;
+  }
 
   @override
   void dispose() {
+    if (!_didSave &&
+        _mediaPath != null &&
+        _mediaPath != _originalMediaPath) {
+      MediaService.instance.deleteMedia(
+        _mediaPath,
+      );
+    }
+
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
     _tagsController.dispose();
+
     super.dispose();
+  }
+
+  List<String> _parseTags(
+    String rawTags,
+  ) {
+    return rawTags
+        .split(',')
+        .map(
+          (tag) => tag.trim(),
+        )
+        .where(
+          (tag) => tag.isNotEmpty,
+        )
+        .toSet()
+        .toList();
   }
 
   Future<void> _pickDate() async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2000),
+      firstDate: DateTime(1900),
       lastDate: DateTime(2100),
     );
 
@@ -81,26 +142,35 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
     });
 
     try {
-      final path =
+      final newPath =
           await MediaService.instance.pickImageFromGallery();
 
       if (!mounted) {
         return;
       }
 
-      if (path != null) {
-        final oldPath = _mediaPath;
-
-        setState(() {
-          _mediaPath = path;
-        });
-
-        if (oldPath != null && oldPath != path) {
-          await MediaService.instance.deleteMedia(
-            oldPath,
-          );
-        }
+      if (newPath == null) {
+        return;
       }
+
+      final currentPath =
+          _mediaPath;
+
+      if (currentPath != null &&
+          currentPath !=
+              _originalMediaPath) {
+        await MediaService.instance.deleteMedia(
+          currentPath,
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _mediaPath = newPath;
+      });
     } catch (error) {
       if (!mounted) {
         return;
@@ -132,26 +202,35 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
     });
 
     try {
-      final path =
+      final newPath =
           await MediaService.instance.takePhoto();
 
       if (!mounted) {
         return;
       }
 
-      if (path != null) {
-        final oldPath = _mediaPath;
-
-        setState(() {
-          _mediaPath = path;
-        });
-
-        if (oldPath != null && oldPath != path) {
-          await MediaService.instance.deleteMedia(
-            oldPath,
-          );
-        }
+      if (newPath == null) {
+        return;
       }
+
+      final currentPath =
+          _mediaPath;
+
+      if (currentPath != null &&
+          currentPath !=
+              _originalMediaPath) {
+        await MediaService.instance.deleteMedia(
+          currentPath,
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _mediaPath = newPath;
+      });
     } catch (error) {
       if (!mounted) {
         return;
@@ -174,19 +253,27 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
   }
 
   Future<void> _removePhoto() async {
-    final path = _mediaPath;
+    final currentPath =
+        _mediaPath;
 
-    if (path == null) {
+    if (currentPath == null) {
+      return;
+    }
+
+    if (currentPath !=
+        _originalMediaPath) {
+      await MediaService.instance.deleteMedia(
+        currentPath,
+      );
+    }
+
+    if (!mounted) {
       return;
     }
 
     setState(() {
       _mediaPath = null;
     });
-
-    await MediaService.instance.deleteMedia(
-      path,
-    );
   }
 
   Future<void> _showPhotoOptions() async {
@@ -205,9 +292,11 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Add Photo',
-                  style: TextStyle(
+                Text(
+                  _mediaPath == null
+                      ? 'Add Photo'
+                      : 'Change Photo',
+                  style: const TextStyle(
                     color: darkGreen,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -223,7 +312,10 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                     'Choose from Photos',
                   ),
                   onTap: () {
-                    Navigator.pop(sheetContext);
+                    Navigator.pop(
+                      sheetContext,
+                    );
+
                     _choosePhoto();
                   },
                 ),
@@ -236,10 +328,37 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                     'Take Photo',
                   ),
                   onTap: () {
-                    Navigator.pop(sheetContext);
+                    Navigator.pop(
+                      sheetContext,
+                    );
+
                     _takePhoto();
                   },
                 ),
+                if (_mediaPath != null)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(
+                        0xFFD65C5C,
+                      ),
+                    ),
+                    title: const Text(
+                      'Remove Photo',
+                      style: TextStyle(
+                        color: Color(
+                          0xFFD65C5C,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(
+                        sheetContext,
+                      );
+
+                      _removePhoto();
+                    },
+                  ),
               ],
             ),
           ),
@@ -248,33 +367,9 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
     );
   }
 
-  List<String> _parseTags(
-    String rawTags,
-  ) {
-    return rawTags
-        .split(',')
-        .map(
-          (tag) => tag.trim(),
-        )
-        .where(
-          (tag) => tag.isNotEmpty,
-        )
-        .toSet()
-        .toList();
-  }
-
-  Future<void> _saveMemory() async {
+  Future<void> _saveChanges() async {
     final title =
         _titleController.text.trim();
-
-    final description =
-        _descriptionController.text.trim();
-
-    final location =
-        _locationController.text.trim();
-
-    final rawTags =
-        _tagsController.text.trim();
 
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -288,20 +383,31 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
       return;
     }
 
+    final description =
+        _descriptionController.text.trim();
+
+    final location =
+        _locationController.text.trim();
+
+    final rawTags =
+        _tagsController.text.trim();
+
     setState(() {
       _isSaving = true;
     });
 
     try {
-      final memory = RecordModel(
-        id: DateTime.now()
-            .microsecondsSinceEpoch
-            .toString(),
-        category: RecordCategory.memory,
+      final updatedMemory = RecordModel(
+        id: widget.memory.id,
+        category:
+            widget.memory.category,
         title: title,
         description: description,
         createdAt: _selectedDate,
-        growthPoints: 2,
+        growthPoints:
+            widget.memory.growthPoints,
+        isCompleted:
+            widget.memory.isCompleted,
         isFavorite: _isFavorite,
         mediaPath: _mediaPath,
         location:
@@ -311,27 +417,44 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
         ),
       );
 
-      await RecordRepository.instance.addRecord(
-        memory,
+      await RecordRepository.instance.updateRecord(
+        updatedMemory,
       );
+
+      final oldMediaPath =
+          _originalMediaPath;
+
+      if (oldMediaPath != null &&
+          oldMediaPath !=
+              _mediaPath) {
+        try {
+          await MediaService.instance.deleteMedia(
+            oldMediaPath,
+          );
+        } catch (_) {
+          // The edited record is already saved.
+        }
+      }
 
       if (!mounted) {
         return;
       }
 
+      _didSave = true;
+      _originalMediaPath =
+          _mediaPath;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            _isFavorite
-                ? 'Favorite memory saved.'
-                : 'Memory saved.',
+            'Memory updated.',
           ),
         ),
       );
 
       Navigator.pop(
         context,
-        true,
+        updatedMemory,
       );
     } catch (error) {
       if (!mounted) {
@@ -345,7 +468,7 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Unable to save memory: $error',
+            'Unable to update memory: $error',
           ),
         ),
       );
@@ -361,7 +484,7 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
         elevation: 0,
         centerTitle: false,
         title: const Text(
-          'Add Memory',
+          'Edit Memory',
           style: TextStyle(
             color: darkGreen,
             fontSize: 22,
@@ -382,9 +505,11 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                 CrossAxisAlignment.start,
             children: [
               const Text(
-                'Save a meaningful moment and make it part of your story.',
+                'Update this moment while keeping it part of your story.',
                 style: TextStyle(
-                  color: Color(0xFF6B7F76),
+                  color: Color(
+                    0xFF6B7F76,
+                  ),
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -402,7 +527,7 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                 controller:
                     _titleController,
                 hintText:
-                    'e.g. Graduation Day',
+                    'Memory title',
               ),
 
               const SizedBox(height: 22),
@@ -471,7 +596,8 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
               const Text(
                 'Separate multiple tags with commas.',
                 style: TextStyle(
-                  color: Color(0xFF8A9992),
+                  color:
+                      Color(0xFF8A9992),
                   fontSize: 11,
                 ),
               ),
@@ -491,7 +617,7 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                 child: FilledButton(
                   onPressed: _isSaving
                       ? null
-                      : _saveMemory,
+                      : _saveChanges,
                   style: FilledButton.styleFrom(
                     backgroundColor:
                         darkGreen,
@@ -521,7 +647,7 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                           ),
                         )
                       : const Text(
-                          'Save Memory',
+                          'Save Changes',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight:
@@ -723,7 +849,8 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
   }
 
   Widget _buildMediaSection() {
-    final mediaPath = _mediaPath;
+    final mediaPath =
+        _mediaPath;
 
     if (mediaPath == null) {
       return Material(
@@ -777,7 +904,8 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                 const Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Text(
                         'Add a Photo',
@@ -785,7 +913,8 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                           color: darkGreen,
                           fontSize: 15,
                           fontWeight:
-                              FontWeight.w700,
+                              FontWeight
+                                  .w700,
                         ),
                       ),
                       SizedBox(height: 5),
@@ -803,7 +932,8 @@ class _AddMemoryPageState extends State<AddMemoryPage> {
                   ),
                 ),
                 const Icon(
-                  Icons.chevron_right_rounded,
+                  Icons
+                      .chevron_right_rounded,
                   color: mintGreen,
                 ),
               ],

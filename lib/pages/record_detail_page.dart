@@ -12,10 +12,12 @@ class RecordDetailPage extends StatefulWidget {
   });
 
   @override
-  State<RecordDetailPage> createState() => _RecordDetailPageState();
+  State<RecordDetailPage> createState() =>
+      _RecordDetailPageState();
 }
 
-class _RecordDetailPageState extends State<RecordDetailPage> {
+class _RecordDetailPageState
+    extends State<RecordDetailPage> {
   static const Color darkGreen = Color(0xFF174C3C);
   static const Color mintGreen = Color(0xFF67C78F);
   static const Color pageBackground = Color(0xFFF6FBF8);
@@ -31,7 +33,9 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final visual = _categoryVisual(_record.category);
+    final visual = _categoryVisual(
+      _record.category,
+    );
 
     return Scaffold(
       backgroundColor: pageBackground,
@@ -64,9 +68,12 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
             40,
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
-              _buildHeader(visual),
+              _buildHeader(
+                visual,
+              ),
 
               const SizedBox(height: 24),
 
@@ -82,22 +89,32 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _openEditDialog,
+                      onPressed:
+                          _openEditDialog,
                       icon: const Icon(
                         Icons.edit_outlined,
                       ),
-                      label: const Text('Edit'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: darkGreen,
+                      label: const Text(
+                        'Edit',
+                      ),
+                      style:
+                          OutlinedButton.styleFrom(
+                        foregroundColor:
+                            darkGreen,
                         side: const BorderSide(
                           color: darkGreen,
                         ),
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
                           vertical: 16,
                         ),
-                        shape: RoundedRectangleBorder(
+                        shape:
+                            RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(18),
+                              BorderRadius.circular(
+                            18,
+                          ),
                         ),
                       ),
                     ),
@@ -108,22 +125,36 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: () {
-                        _confirmDelete(context);
+                        _confirmDelete(
+                          context,
+                        );
                       },
                       icon: const Icon(
-                        Icons.delete_outline_rounded,
+                        Icons
+                            .delete_outline_rounded,
                       ),
-                      label: const Text('Delete'),
-                      style: FilledButton.styleFrom(
+                      label: const Text(
+                        'Delete',
+                      ),
+                      style:
+                          FilledButton.styleFrom(
                         backgroundColor:
-                            const Color(0xFFB94A48),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
+                            const Color(
+                          0xFFB94A48,
+                        ),
+                        foregroundColor:
+                            Colors.white,
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
                           vertical: 16,
                         ),
-                        shape: RoundedRectangleBorder(
+                        shape:
+                            RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(18),
+                              BorderRadius.circular(
+                            18,
+                          ),
                         ),
                       ),
                     ),
@@ -137,13 +168,16 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
     );
   }
 
-  Widget _buildHeader(_CategoryVisual visual) {
+  Widget _buildHeader(
+    _CategoryVisual visual,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: softBorder,
         ),
@@ -157,7 +191,10 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
               color: visual.color.withValues(
                 alpha: 0.16,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius:
+                  BorderRadius.circular(
+                20,
+              ),
             ),
             child: Icon(
               visual.icon,
@@ -165,7 +202,9 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
               size: 31,
             ),
           ),
+
           const SizedBox(width: 18),
+
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -176,7 +215,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                   style: const TextStyle(
                     color: darkGreen,
                     fontSize: 25,
-                    fontWeight: FontWeight.w800,
+                    fontWeight:
+                        FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -185,27 +225,36 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                     _record.category,
                   ),
                   style: const TextStyle(
-                    color: Color(0xFF6B7D75),
+                    color:
+                        Color(0xFF6B7D75),
                     fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
+
           Container(
-            padding: const EdgeInsets.symmetric(
+            padding:
+                const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFFE7F6ED),
-              borderRadius: BorderRadius.circular(20),
+              color: const Color(
+                0xFFE7F6ED,
+              ),
+              borderRadius:
+                  BorderRadius.circular(
+                20,
+              ),
             ),
             child: Text(
               '+${_record.growthPoints}',
               style: const TextStyle(
                 color: darkGreen,
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                    FontWeight.w700,
               ),
             ),
           ),
@@ -220,7 +269,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius:
+            BorderRadius.circular(22),
         border: Border.all(
           color: softBorder,
         ),
@@ -231,7 +281,9 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
             Icons.calendar_today_outlined,
             color: mintGreen,
           ),
+
           const SizedBox(width: 14),
+
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -240,7 +292,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                 const Text(
                   'Created',
                   style: TextStyle(
-                    color: Color(0xFF6B7D75),
+                    color:
+                        Color(0xFF6B7D75),
                     fontSize: 12,
                   ),
                 ),
@@ -252,20 +305,25 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                   style: const TextStyle(
                     color: darkGreen,
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight:
+                        FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
+
           Text(
             _formatTime(
               _record.createdAt,
             ),
             style: const TextStyle(
-              color: Color(0xFF6B7D75),
+              color: Color(
+                0xFF6B7D75,
+              ),
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontWeight:
+                  FontWeight.w500,
             ),
           ),
         ],
@@ -279,23 +337,28 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius:
+            BorderRadius.circular(22),
         border: Border.all(
           color: softBorder,
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           const Text(
             'Details',
             style: TextStyle(
               color: darkGreen,
               fontSize: 18,
-              fontWeight: FontWeight.w700,
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
+
           const SizedBox(height: 14),
+
           Text(
             _record.description.isEmpty
                 ? 'No additional details.'
@@ -312,7 +375,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
   }
 
   Future<void> _openEditDialog() async {
-    final controller = TextEditingController(
+    final controller =
+        TextEditingController(
       text: _record.description,
     );
 
@@ -327,13 +391,14 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
             24,
             8,
             24,
-            MediaQuery.of(sheetContext)
-                    .viewInsets
-                    .bottom +
+            MediaQuery.of(
+                      sheetContext,
+                    ).viewInsets.bottom +
                 32,
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize:
+                MainAxisSize.min,
             crossAxisAlignment:
                 CrossAxisAlignment.start,
             children: [
@@ -342,62 +407,96 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                 style: TextStyle(
                   color: darkGreen,
                   fontSize: 24,
-                  fontWeight: FontWeight.w800,
+                  fontWeight:
+                      FontWeight.w800,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               Text(
                 _record.title,
                 style: const TextStyle(
-                  color: Color(0xFF6B7D75),
+                  color:
+                      Color(0xFF6B7D75),
                   fontSize: 14,
                 ),
               ),
+
               const SizedBox(height: 20),
+
               TextField(
                 controller: controller,
                 autofocus: true,
                 minLines: 6,
                 maxLines: 12,
                 textCapitalization:
-                    TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  hintText: 'Edit details...',
+                    TextCapitalization
+                        .sentences,
+                decoration:
+                    InputDecoration(
+                  hintText:
+                      'Edit details...',
                   filled: true,
-                  fillColor: pageBackground,
+                  fillColor:
+                      pageBackground,
                   contentPadding:
-                      const EdgeInsets.all(18),
-                  border: OutlineInputBorder(
+                      const EdgeInsets
+                          .all(
+                    18,
+                  ),
+                  border:
+                      OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: softBorder,
+                        BorderRadius
+                            .circular(
+                      18,
+                    ),
+                    borderSide:
+                        const BorderSide(
+                      color:
+                          softBorder,
                     ),
                   ),
-                  enabledBorder: OutlineInputBorder(
+                  enabledBorder:
+                      OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: softBorder,
+                        BorderRadius
+                            .circular(
+                      18,
+                    ),
+                    borderSide:
+                        const BorderSide(
+                      color:
+                          softBorder,
                     ),
                   ),
-                  focusedBorder: OutlineInputBorder(
+                  focusedBorder:
+                      OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: mintGreen,
+                        BorderRadius
+                            .circular(
+                      18,
+                    ),
+                    borderSide:
+                        const BorderSide(
+                      color:
+                          mintGreen,
                       width: 2,
                     ),
                   ),
                 ),
               ),
+
               const SizedBox(height: 22),
+
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
                     final value =
-                        controller.text.trim();
+                        controller.text
+                            .trim();
 
                     if (value.isEmpty) {
                       ScaffoldMessenger.of(
@@ -409,6 +508,7 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                           ),
                         ),
                       );
+
                       return;
                     }
 
@@ -417,22 +517,34 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                       value,
                     );
                   },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: darkGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
+                  style:
+                      FilledButton
+                          .styleFrom(
+                    backgroundColor:
+                        darkGreen,
+                    foregroundColor:
+                        Colors.white,
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
                       vertical: 16,
                     ),
-                    shape: RoundedRectangleBorder(
+                    shape:
+                        RoundedRectangleBorder(
                       borderRadius:
-                          BorderRadius.circular(18),
+                          BorderRadius
+                              .circular(
+                        18,
+                      ),
                     ),
                   ),
                   child: const Text(
                     'Save Changes',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontWeight:
+                          FontWeight
+                              .w700,
                     ),
                   ),
                 ),
@@ -449,17 +561,14 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       return;
     }
 
-    final updatedRecord = RecordModel(
-      id: _record.id,
-      category: _record.category,
-      title: _record.title,
-      description: updatedDescription,
-      createdAt: _record.createdAt,
-      growthPoints: _record.growthPoints,
-      isCompleted: _record.isCompleted,
+    final updatedRecord =
+        _record.copyWith(
+      description:
+          updatedDescription,
     );
 
-    await RecordRepository.instance.updateRecord(
+    await RecordRepository.instance
+        .updateRecord(
       updatedRecord,
     );
 
@@ -471,7 +580,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       _record = updatedRecord;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       const SnackBar(
         content: Text(
           'Record updated',
@@ -486,7 +596,9 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
     final shouldDelete =
         await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
+      builder: (
+        dialogContext,
+      ) {
         return AlertDialog(
           title: const Text(
             'Delete record?',
@@ -513,9 +625,14 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                   true,
                 );
               },
-              style: FilledButton.styleFrom(
+              style:
+                  FilledButton.styleFrom(
                 backgroundColor:
-                    const Color(0xFFB94A48),
+                    const Color(
+                  0xFFB94A48,
+                ),
+                foregroundColor:
+                    Colors.white,
               ),
               child: const Text(
                 'Delete',
@@ -530,7 +647,8 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       return;
     }
 
-    await RecordRepository.instance.removeRecord(
+    await RecordRepository.instance
+        .deleteRecord(
       _record.id,
     );
 
@@ -538,18 +656,15 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
       return;
     }
 
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Record deleted',
-        ),
-      ),
+    Navigator.pop(
+      context,
+      true,
     );
   }
 
-  static String _formatDate(DateTime date) {
+  static String _formatDate(
+    DateTime date,
+  ) {
     const months = [
       'January',
       'February',
@@ -570,14 +685,17 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
         '${date.year}';
   }
 
-  static String _formatTime(DateTime date) {
+  static String _formatTime(
+    DateTime date,
+  ) {
     final hour = date.hour;
 
-    final minute =
-        date.minute.toString().padLeft(
-              2,
-              '0',
-            );
+    final minute = date.minute
+        .toString()
+        .padLeft(
+          2,
+          '0',
+        );
 
     final period =
         hour >= 12 ? 'PM' : 'AM';
@@ -640,56 +758,64 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
 
       case RecordCategory.sleep:
         return const _CategoryVisual(
-          icon: Icons.bedtime_outlined,
+          icon:
+              Icons.bedtime_outlined,
           color: Color(0xFF7A91E8),
         );
 
       case RecordCategory.work:
         return const _CategoryVisual(
-          icon: Icons.work_outline_rounded,
+          icon:
+              Icons.work_outline_rounded,
           color: Color(0xFF70A8F5),
         );
 
       case RecordCategory.study:
         return const _CategoryVisual(
-          icon: Icons.menu_book_rounded,
+          icon:
+              Icons.menu_book_rounded,
           color: Color(0xFFA78BF0),
         );
 
       case RecordCategory.finance:
         return const _CategoryVisual(
-          icon:
-              Icons.account_balance_wallet_outlined,
+          icon: Icons
+              .account_balance_wallet_outlined,
           color: Color(0xFF64CFA1),
         );
 
       case RecordCategory.health:
         return const _CategoryVisual(
-          icon: Icons.favorite_border_rounded,
+          icon:
+              Icons.favorite_border_rounded,
           color: Color(0xFFFF8A8A),
         );
 
       case RecordCategory.exercise:
         return const _CategoryVisual(
-          icon: Icons.directions_run_rounded,
+          icon:
+              Icons.directions_run_rounded,
           color: Color(0xFFFF9F68),
         );
 
       case RecordCategory.water:
         return const _CategoryVisual(
-          icon: Icons.water_drop_outlined,
+          icon:
+              Icons.water_drop_outlined,
           color: Color(0xFF62B8F6),
         );
 
       case RecordCategory.memory:
         return const _CategoryVisual(
-          icon: Icons.photo_album_outlined,
+          icon:
+              Icons.photo_album_outlined,
           color: Color(0xFFE58BC8),
         );
 
       case RecordCategory.other:
         return const _CategoryVisual(
-          icon: Icons.auto_awesome_rounded,
+          icon:
+              Icons.auto_awesome_rounded,
           color: mintGreen,
         );
     }

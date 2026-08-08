@@ -40,6 +40,44 @@ class MemoryService {
     return memories.take(limit).toList();
   }
 
+  List<RecordModel> getFavoriteMemories() {
+    final memories = getAllMemories()
+        .where(
+          (memory) => memory.isFavorite,
+        )
+        .toList();
+
+    return memories;
+  }
+
+  bool isFavorite(
+    RecordModel memory,
+  ) {
+    return memory.isFavorite;
+  }
+
+  Future<void> setFavorite(
+    RecordModel memory,
+    bool value,
+  ) async {
+    final updatedMemory = memory.copyWith(
+      isFavorite: value,
+    );
+
+    await RecordRepository.instance.updateRecord(
+      updatedMemory,
+    );
+  }
+
+  Future<void> toggleFavorite(
+    RecordModel memory,
+  ) async {
+    await setFavorite(
+      memory,
+      !memory.isFavorite,
+    );
+  }
+
   List<RecordModel> getMemoriesForDate(
     DateTime date,
   ) {
@@ -190,8 +228,6 @@ class MemoryService {
       } else if (date.year == now.year &&
           date.month == now.month) {
         section = 'This Month';
-      } else if (date.year == now.year) {
-        section = '${date.year}';
       } else {
         section = '${date.year}';
       }
@@ -230,6 +266,10 @@ class MemoryService {
     ).length;
   }
 
+  int get favoriteCount {
+    return getFavoriteMemories().length;
+  }
+
   String buildMemorySummary() {
     final memories = getAllMemories();
 
@@ -263,19 +303,6 @@ class MemoryService {
     }
 
     return 'You have preserved ${memories.length} memories so far. Keep capturing the moments you may want to remember later.';
-  }
-
-  List<RecordModel> getFavoriteMemories() {
-    // Favorite support will be added when
-    // the RecordModel gains a favorite field.
-    return [];
-  }
-
-  bool isFavorite(
-    RecordModel memory,
-  ) {
-    // Placeholder for Memory V2.
-    return false;
   }
 
   DateTime _dateOnly(

@@ -6,16 +6,20 @@ import 'database_helper.dart';
 class RecordRepository extends ChangeNotifier {
   RecordRepository._();
 
-  static final RecordRepository instance = RecordRepository._();
+  static final RecordRepository instance =
+      RecordRepository._();
 
   final List<RecordModel> _records = [];
 
   List<RecordModel> getAll() {
-    return List.unmodifiable(_records);
+    return List.unmodifiable(
+      _records,
+    );
   }
 
   Future<void> loadRecords() async {
-    final records = await DatabaseHelper.instance.getRecords();
+    final records =
+        await DatabaseHelper.instance.getRecords();
 
     _records
       ..clear()
@@ -24,20 +28,31 @@ class RecordRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addRecord(RecordModel record) async {
-    await DatabaseHelper.instance.insertRecord(record);
+  Future<void> addRecord(
+    RecordModel record,
+  ) async {
+    await DatabaseHelper.instance.insertRecord(
+      record,
+    );
 
-    _records.insert(0, record);
+    _records.insert(
+      0,
+      record,
+    );
 
     notifyListeners();
   }
 
-  /// ⭐ NEW
-  Future<void> updateRecord(RecordModel record) async {
-    await DatabaseHelper.instance.updateRecord(record);
+  Future<void> updateRecord(
+    RecordModel record,
+  ) async {
+    await DatabaseHelper.instance.updateRecord(
+      record,
+    );
 
     final index = _records.indexWhere(
-      (existingRecord) => existingRecord.id == record.id,
+      (existingRecord) =>
+          existingRecord.id == record.id,
     );
 
     if (index != -1) {
@@ -47,8 +62,12 @@ class RecordRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeRecord(String id) async {
-    await DatabaseHelper.instance.deleteRecord(id);
+  Future<void> deleteRecord(
+    String id,
+  ) async {
+    await DatabaseHelper.instance.deleteRecord(
+      id,
+    );
 
     _records.removeWhere(
       (record) => record.id == id,
@@ -67,9 +86,11 @@ class RecordRepository extends ChangeNotifier {
 
   int get totalRecords => _records.length;
 
-  int get totalGrowthPoints =>
-      _records.fold(
-        0,
-        (sum, record) => sum + record.growthPoints,
-      );
+  int get totalGrowthPoints {
+    return _records.fold<int>(
+      0,
+      (sum, record) =>
+          sum + record.growthPoints,
+    );
+  }
 }
