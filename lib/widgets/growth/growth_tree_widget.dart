@@ -13,6 +13,7 @@ class GrowthTreeWidget extends StatelessWidget {
   static const Color darkGreen = Color(0xFF174C3C);
   static const Color mintGreen = Color(0xFF67C78F);
   static const Color lightGreen = Color(0xFFEAF7EF);
+  static const Color softBorder = Color(0xFFE5EEE8);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,7 @@ class GrowthTreeWidget extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: const Color(0xFFE5EEE8),
+          color: softBorder,
         ),
       ),
       child: Column(
@@ -32,31 +33,7 @@ class GrowthTreeWidget extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 210,
-                height: 210,
-                decoration: const BoxDecoration(
-                  color: lightGreen,
-                  shape: BoxShape.circle,
-                ),
-              ),
-
-              Icon(
-                growth.fallbackIcon,
-                size: 118,
-                color: mintGreen,
-              ),
-
-              Positioned(
-                right: 18,
-                bottom: 16,
-                child: _buildMintPlaceholder(),
-              ),
-            ],
-          ),
+          _buildTreeScene(),
 
           const SizedBox(height: 22),
 
@@ -88,8 +65,11 @@ class GrowthTreeWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: growth.progress,
               minHeight: 10,
-              backgroundColor: const Color(0xFFEAF2ED),
-              valueColor: const AlwaysStoppedAnimation(
+              backgroundColor: const Color(
+                0xFFEAF2ED,
+              ),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(
                 mintGreen,
               ),
             ),
@@ -98,7 +78,7 @@ class GrowthTreeWidget extends StatelessWidget {
           const SizedBox(height: 10),
 
           Text(
-            '${(growth.progress * 100).round()}% to next stage',
+            _progressText(),
             style: const TextStyle(
               color: Color(0xFF6D8078),
               fontSize: 12,
@@ -138,42 +118,271 @@ class GrowthTreeWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildSeasonBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: lightGreen,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        growth.seasonName,
-        style: const TextStyle(
-          color: darkGreen,
-          fontWeight: FontWeight.w700,
-        ),
+  Widget _buildTreeScene() {
+    return SizedBox(
+      width: 250,
+      height: 250,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 230,
+            height: 230,
+            decoration: BoxDecoration(
+              color: _seasonBackgroundColor(),
+              shape: BoxShape.circle,
+            ),
+          ),
+
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Image.asset(
+                _treeAssetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (
+                  context,
+                  error,
+                  stackTrace,
+                ) {
+                  return _buildFallbackTree();
+                },
+              ),
+            ),
+          ),
+
+          Positioned(
+            right: 5,
+            bottom: 16,
+            child: _buildMint(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMintPlaceholder() {
-    return Container(
-      width: 54,
-      height: 54,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE5EEE8),
-        ),
-      ),
-      child: const Icon(
-        Icons.pets,
-        color: mintGreen,
+  Widget _buildFallbackTree() {
+    return Center(
+      child: Icon(
+        growth.fallbackIcon,
+        size: 118,
+        color: _treeFallbackColor(),
       ),
     );
+  }
+
+  Widget _buildSeasonBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 7,
+      ),
+      decoration: BoxDecoration(
+        color: _seasonBadgeColor(),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _seasonIcon(),
+            size: 15,
+            color: darkGreen,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            growth.seasonName,
+            style: const TextStyle(
+              color: darkGreen,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMint() {
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(
+          color: softBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: 0.04,
+            ),
+            blurRadius: 8,
+            offset: const Offset(
+              0,
+              3,
+            ),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/mascot/mint_idle.png',
+        fit: BoxFit.contain,
+        errorBuilder: (
+          context,
+          error,
+          stackTrace,
+        ) {
+          return const Icon(
+            Icons.eco_rounded,
+            color: mintGreen,
+            size: 27,
+          );
+        },
+      ),
+    );
+  }
+
+  String get _treeAssetPath {
+    return 'assets/tree/${_seasonFolder()}/${_stageFileName()}.png';
+  }
+
+  String _seasonFolder() {
+    switch (growth.season) {
+      case TreeSeason.spring:
+        return 'spring';
+
+      case TreeSeason.summer:
+        return 'summer';
+
+      case TreeSeason.autumn:
+        return 'autumn';
+
+      case TreeSeason.winter:
+        return 'winter';
+    }
+  }
+
+  String _stageFileName() {
+    switch (growth.stage) {
+      case GrowthStage.seed:
+        return 'seed';
+
+      case GrowthStage.sprout:
+        return 'sprout';
+
+      case GrowthStage.seedling:
+        return 'seedling';
+
+      case GrowthStage.youngTree:
+        return 'young_tree';
+
+      case GrowthStage.growingTree:
+        return 'growing_tree';
+
+      case GrowthStage.bloomingTree:
+        return 'blooming_tree';
+
+      case GrowthStage.flourishingTree:
+        return 'flourishing_tree';
+    }
+  }
+
+  Color _seasonBackgroundColor() {
+    switch (growth.season) {
+      case TreeSeason.spring:
+        return const Color(
+          0xFFF0F8E9,
+        );
+
+      case TreeSeason.summer:
+        return const Color(
+          0xFFE6F6EC,
+        );
+
+      case TreeSeason.autumn:
+        return const Color(
+          0xFFFFF3E1,
+        );
+
+      case TreeSeason.winter:
+        return const Color(
+          0xFFF0F5F4,
+        );
+    }
+  }
+
+  Color _seasonBadgeColor() {
+    switch (growth.season) {
+      case TreeSeason.spring:
+        return const Color(
+          0xFFEDF8E6,
+        );
+
+      case TreeSeason.summer:
+        return const Color(
+          0xFFE7F6ED,
+        );
+
+      case TreeSeason.autumn:
+        return const Color(
+          0xFFFFF0D7,
+        );
+
+      case TreeSeason.winter:
+        return const Color(
+          0xFFEAF1F0,
+        );
+    }
+  }
+
+  Color _treeFallbackColor() {
+    switch (growth.season) {
+      case TreeSeason.spring:
+        return const Color(
+          0xFF82C96C,
+        );
+
+      case TreeSeason.summer:
+        return mintGreen;
+
+      case TreeSeason.autumn:
+        return const Color(
+          0xFFDFA454,
+        );
+
+      case TreeSeason.winter:
+        return const Color(
+          0xFF76958B,
+        );
+    }
+  }
+
+  IconData _seasonIcon() {
+    switch (growth.season) {
+      case TreeSeason.spring:
+        return Icons.local_florist_rounded;
+
+      case TreeSeason.summer:
+        return Icons.wb_sunny_outlined;
+
+      case TreeSeason.autumn:
+        return Icons.eco_outlined;
+
+      case TreeSeason.winter:
+        return Icons.ac_unit_rounded;
+    }
+  }
+
+  String _progressText() {
+    if (growth.stage ==
+        GrowthStage.flourishingTree) {
+      return 'Your life tree is flourishing.';
+    }
+
+    return '${(growth.progress * 100).round()}% to next stage';
   }
 
   String _stageDescription() {
@@ -211,18 +420,25 @@ class _Metric extends StatelessWidget {
   final String title;
   final String value;
 
-  static const Color darkGreen = Color(0xFF174C3C);
-  static const Color lightGreen = Color(0xFFEAF7EF);
+  static const Color darkGreen =
+      Color(0xFF174C3C);
+
+  static const Color lightGreen =
+      Color(0xFFEAF7EF);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(
         vertical: 16,
+        horizontal: 8,
       ),
       decoration: BoxDecoration(
         color: lightGreen,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius:
+            BorderRadius.circular(18),
       ),
       child: Column(
         children: [
@@ -239,7 +455,8 @@ class _Metric extends StatelessWidget {
             style: const TextStyle(
               color: darkGreen,
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight:
+                  FontWeight.w800,
             ),
           ),
         ],

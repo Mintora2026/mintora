@@ -34,7 +34,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
-    - assets/animations/
+    - assets/logo/
     - assets/mascot/
     - assets/tree/
+    - assets/illustrations/
+    - assets/icons/
+    - assets/lottie/
