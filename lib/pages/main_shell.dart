@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'growth_page.dart';
 import 'home_page.dart';
+import 'memory/memory_page.dart';
 import 'profile_page.dart';
 import 'record_page.dart';
 import 'timeline_page.dart';
@@ -20,6 +21,7 @@ class _MainShellState extends State<MainShell> {
     HomePage(),
     TimelinePage(),
     RecordPage(),
+    MemoryPage(),
     GrowthPage(),
     ProfilePage(),
   ];
@@ -43,30 +45,61 @@ class _MainShellState extends State<MainShell> {
         height: 72,
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFFE2F4E9),
+        labelBehavior:
+            NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            icon: Icon(
+              Icons.home_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.home_rounded,
+            ),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.timeline_outlined),
-            selectedIcon: Icon(Icons.timeline_rounded),
+            icon: Icon(
+              Icons.timeline_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.timeline_rounded,
+            ),
             label: 'Timeline',
           ),
           NavigationDestination(
-            icon: Icon(Icons.add_circle_outline_rounded),
-            selectedIcon: Icon(Icons.add_circle_rounded),
+            icon: Icon(
+              Icons.add_circle_outline_rounded,
+            ),
+            selectedIcon: Icon(
+              Icons.add_circle_rounded,
+            ),
             label: 'Record',
           ),
           NavigationDestination(
-            icon: Icon(Icons.park_outlined),
-            selectedIcon: Icon(Icons.park_rounded),
+            icon: Icon(
+              Icons.auto_stories_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.auto_stories_rounded,
+            ),
+            label: 'Memory',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.park_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.park_rounded,
+            ),
             label: 'Growth',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
+            icon: Icon(
+              Icons.person_outline_rounded,
+            ),
+            selectedIcon: Icon(
+              Icons.person_rounded,
+            ),
             label: 'Profile',
           ),
         ],

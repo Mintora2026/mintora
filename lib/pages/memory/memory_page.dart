@@ -8,6 +8,7 @@ import '../../widgets/memory/memory_card.dart';
 import '../../widgets/memory/memory_header.dart';
 import '../../widgets/memory/memory_section.dart';
 import '../../widgets/memory/memory_timeline.dart';
+import 'add_memory_page.dart';
 import 'favorite_memory_page.dart';
 import 'memory_detail_page.dart';
 import 'memory_search_page.dart';
@@ -157,9 +158,7 @@ class MemoryPage extends StatelessWidget {
                                   padding:
                                       EdgeInsets.only(
                                     bottom: index ==
-                                            recentMemories
-                                                    .length -
-                                                1
+                                            recentMemories.length - 1
                                         ? 0
                                         : 12,
                                   ),
@@ -210,10 +209,28 @@ class MemoryPage extends StatelessWidget {
       ),
       floatingActionButton:
           FloatingActionButton.extended(
-        onPressed: () {
-          _showAddMemoryComingNext(
+        onPressed: () async {
+          final saved = await Navigator.push<bool>(
             context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  const AddMemoryPage(),
+            ),
           );
+
+          if (!context.mounted) {
+            return;
+          }
+
+          if (saved == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Your new memory is now part of your story.',
+                ),
+              ),
+            );
+          }
         },
         backgroundColor: darkGreen,
         foregroundColor: Colors.white,
@@ -331,18 +348,6 @@ class MemoryPage extends StatelessWidget {
         builder: (context) =>
             MemoryDetailPage(
           memory: memory,
-        ),
-      ),
-    );
-  }
-
-  void _showAddMemoryComingNext(
-    BuildContext context,
-  ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Add Memory form is coming next.',
         ),
       ),
     );
