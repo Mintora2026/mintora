@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../database/record_repository.dart';
+import '../models/growth_model.dart';
 import '../models/record_model.dart';
+import '../services/growth_service.dart';
 import '../services/insight_service.dart';
 import '../widgets/ai_insight_card.dart';
+import '../widgets/growth/growth_tree_widget.dart';
 
 class GrowthPage extends StatelessWidget {
   const GrowthPage({super.key});
@@ -18,6 +21,7 @@ class GrowthPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final repository = RecordRepository.instance;
     final insightService = InsightService.instance;
+    final growthService = GrowthService.instance;
 
     return Scaffold(
       backgroundColor: pageBackground,
@@ -35,11 +39,12 @@ class GrowthPage extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Growth insights',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    'Advanced insights will be added later.',
+                    'Advanced growth insights are coming next.',
                   ),
                 ),
               );
@@ -56,46 +61,19 @@ class GrowthPage extends StatelessWidget {
         child: AnimatedBuilder(
           animation: repository,
           builder: (context, child) {
-            final records = [...repository.getAll()]
-              ..sort(
+            final records = [
+              ...repository.getAll(),
+            ]..sort(
                 (a, b) => b.createdAt.compareTo(
                   a.createdAt,
                 ),
               );
 
-            final todayGrowth = _growthForDate(
-              records,
-              DateTime.now(),
-            );
-
-            final totalGrowth =
-                insightService.calculateGrowthPoints(
-              records,
-            );
-
-            final weeklyGrowth =
-                insightService.calculateGrowthPoints(
-              records,
-              days: 7,
-            );
-
-            final activeDays =
-                insightService.calculateActiveDays(
-              records,
-              days: 7,
-            );
-
-            final streak =
-                insightService.calculateCurrentStreak(
-              records,
-            );
+            final growth =
+                growthService.buildGrowthModel();
 
             final weekData = _buildLast7Days(
               records,
-            );
-
-            final stage = _growthStage(
-              totalGrowth,
             );
 
             final categoryGrowth =
@@ -113,8 +91,8 @@ class GrowthPage extends StatelessWidget {
 
             final growthScore =
                 _calculateWeeklyScore(
-              weeklyGrowth,
-              activeDays,
+              growth.weeklyGrowth,
+              growth.activeDays,
             );
 
             final growthInsight =
@@ -134,7 +112,7 @@ class GrowthPage extends StatelessWidget {
                     CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'See how your everyday actions are shaping your growth.',
+                    'See how your everyday actions are shaping your life tree.',
                     style: TextStyle(
                       color: Color(0xFF6B7F76),
                       fontSize: 14,
@@ -146,9 +124,7 @@ class GrowthPage extends StatelessWidget {
 
                   _buildGrowthScoreCard(
                     score: growthScore,
-                    streak: streak,
-                    activeDays: activeDays,
-                    weeklyGrowth: weeklyGrowth,
+                    growth: growth,
                   ),
 
                   const SizedBox(height: 28),
@@ -156,15 +132,13 @@ class GrowthPage extends StatelessWidget {
                   _buildSectionHeader(
                     title: 'Your Growth Tree',
                     subtitle:
-                        'Your tree grows from your total lifetime progress.',
+                        'One life. One tree. Every meaningful action helps it grow.',
                   ),
 
                   const SizedBox(height: 14),
 
-                  _buildTreeCard(
-                    stage: stage,
-                    todayGrowth: todayGrowth,
-                    totalGrowth: totalGrowth,
+                  GrowthTreeWidget(
+                    growth: growth,
                   ),
 
                   const SizedBox(height: 28),
@@ -172,7 +146,7 @@ class GrowthPage extends StatelessWidget {
                   _buildSectionHeader(
                     title: 'Last 7 Days',
                     subtitle:
-                        '$weeklyGrowth growth points earned this week.',
+                        '${growth.weeklyGrowth} growth points earned this week.',
                   ),
 
                   const SizedBox(height: 14),
@@ -186,7 +160,7 @@ class GrowthPage extends StatelessWidget {
                   _buildSectionHeader(
                     title: 'Growth by Category',
                     subtitle:
-                        'See which parts of your life are contributing most.',
+                        'Every part of your life contributes to the same tree.',
                   ),
 
                   const SizedBox(height: 14),
@@ -229,7 +203,8 @@ class GrowthPage extends StatelessWidget {
     required String subtitle,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Text(
           title,
@@ -245,6 +220,7 @@ class GrowthPage extends StatelessWidget {
           style: const TextStyle(
             color: Color(0xFF7A8C84),
             fontSize: 13,
+            height: 1.4,
           ),
         ),
       ],
@@ -253,9 +229,7 @@ class GrowthPage extends StatelessWidget {
 
   Widget _buildGrowthScoreCard({
     required int score,
-    required int streak,
-    required int activeDays,
-    required int weeklyGrowth,
+    required GrowthModel growth,
   }) {
     return Container(
       width: double.infinity,
@@ -269,10 +243,12 @@ class GrowthPage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius:
+            BorderRadius.circular(26),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -282,7 +258,8 @@ class GrowthPage extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight:
+                        FontWeight.w700,
                   ),
                 ),
               ),
@@ -291,7 +268,8 @@ class GrowthPage extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
-                  fontWeight: FontWeight.w800,
+                  fontWeight:
+                      FontWeight.w800,
                 ),
               ),
             ],
@@ -300,23 +278,29 @@ class GrowthPage extends StatelessWidget {
           const SizedBox(height: 10),
 
           Text(
-            _weeklyMessage(score),
+            _weeklyMessage(
+              score,
+            ),
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 14,
+              height: 1.4,
             ),
           ),
 
           const SizedBox(height: 20),
 
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(20),
             child: LinearProgressIndicator(
               value: score / 100,
               minHeight: 10,
-              backgroundColor: Colors.white24,
+              backgroundColor:
+                  Colors.white24,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(
+                  const AlwaysStoppedAnimation<
+                      Color>(
                 Color(0xFF9EE76B),
               ),
             ),
@@ -328,180 +312,32 @@ class GrowthPage extends StatelessWidget {
             children: [
               Expanded(
                 child: _GrowthMetric(
-                  icon: Icons.local_fire_department_rounded,
-                  value: '$streak',
+                  icon: Icons
+                      .local_fire_department_rounded,
+                  value:
+                      '${growth.streakDays}',
                   label: 'Day streak',
                 ),
               ),
               Expanded(
                 child: _GrowthMetric(
-                  icon: Icons.calendar_today_outlined,
-                  value: '$activeDays',
+                  icon: Icons
+                      .calendar_today_outlined,
+                  value:
+                      '${growth.activeDays}',
                   label: 'Active days',
                 ),
               ),
               Expanded(
                 child: _GrowthMetric(
-                  icon: Icons.auto_awesome_rounded,
-                  value: '$weeklyGrowth',
+                  icon:
+                      Icons.auto_awesome_rounded,
+                  value:
+                      '${growth.weeklyGrowth}',
                   label: 'Week points',
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTreeCard({
-    required _GrowthStageData stage,
-    required int todayGrowth,
-    required int totalGrowth,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: softBorder,
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 170,
-            height: 170,
-            decoration: const BoxDecoration(
-              color: lightGreen,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              stage.icon,
-              color: mintGreen,
-              size: 105,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 11,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: lightGreen,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text(
-              'Level ${stage.level}',
-              style: const TextStyle(
-                color: darkGreen,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            stage.name,
-            style: const TextStyle(
-              color: darkGreen,
-              fontSize: 23,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-
-          const SizedBox(height: 7),
-
-          Text(
-            stage.description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF667970),
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 22),
-
-          Row(
-            children: [
-              Expanded(
-                child: _TreeMetricCard(
-                  label: 'Today',
-                  value: '+$todayGrowth',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _TreeMetricCard(
-                  label: 'Total Growth',
-                  value: '$totalGrowth',
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 22),
-
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  stage.isMaxLevel
-                      ? 'Maximum stage reached'
-                      : 'Progress to ${stage.nextStageName}',
-                  style: const TextStyle(
-                    color: darkGreen,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Text(
-                '${(stage.progress * 100).round()}%',
-                style: const TextStyle(
-                  color: mintGreen,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: stage.progress,
-              minHeight: 10,
-              backgroundColor:
-                  const Color(0xFFEAF2ED),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(
-                mintGreen,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            stage.isMaxLevel
-                ? 'Keep growing your life story.'
-                : '${stage.pointsRemaining} growth points until ${stage.nextStageName}.',
-            style: const TextStyle(
-              color: Color(0xFF75877F),
-              fontSize: 12,
-            ),
           ),
         ],
       ),
@@ -529,7 +365,8 @@ class GrowthPage extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: softBorder,
         ),
@@ -537,95 +374,129 @@ class GrowthPage extends StatelessWidget {
       child: SizedBox(
         height: 145,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: days.map((day) {
-            final heightFactor = day.points == 0
-                ? 0.05
-                : day.points / maxPoints;
+          crossAxisAlignment:
+              CrossAxisAlignment.end,
+          children: days.map(
+            (day) {
+              final heightFactor =
+                  day.points == 0
+                      ? 0.05
+                      : day.points /
+                          maxPoints;
 
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 5,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${day.points}',
-                      style: const TextStyle(
-                        color: darkGreen,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+              return Expanded(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 5,
+                  ),
+                  child: Column(
+                    mainAxisAlignment:
+                        MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${day.points}',
+                        style:
+                            const TextStyle(
+                          color: darkGreen,
+                          fontSize: 11,
+                          fontWeight:
+                              FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: FractionallySizedBox(
-                          heightFactor:
-                              heightFactor.clamp(
-                            0.05,
-                            1.0,
-                          ),
-                          child: Container(
-                            width: 28,
-                            decoration: BoxDecoration(
-                              color: day.isToday
-                                  ? darkGreen
-                                  : mintGreen.withValues(
-                                      alpha: 0.55,
-                                    ),
-                              borderRadius:
-                                  BorderRadius.circular(
-                                10,
+
+                      const SizedBox(
+                        height: 6,
+                      ),
+
+                      Expanded(
+                        child: Align(
+                          alignment:
+                              Alignment
+                                  .bottomCenter,
+                          child:
+                              FractionallySizedBox(
+                            heightFactor:
+                                heightFactor
+                                    .clamp(
+                              0.05,
+                              1.0,
+                            ),
+                            child: Container(
+                              width: 28,
+                              decoration:
+                                  BoxDecoration(
+                                color:
+                                    day.isToday
+                                        ? darkGreen
+                                        : mintGreen
+                                            .withValues(
+                                            alpha:
+                                                0.55,
+                                          ),
+                                borderRadius:
+                                    BorderRadius
+                                        .circular(
+                                  10,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      day.label,
-                      style: TextStyle(
-                        color: day.isToday
-                            ? darkGreen
-                            : const Color(
-                                0xFF7A8C84,
-                              ),
-                        fontSize: 11,
-                        fontWeight: day.isToday
-                            ? FontWeight.w800
-                            : FontWeight.w500,
+
+                      const SizedBox(
+                        height: 8,
                       ),
-                    ),
-                  ],
+
+                      Text(
+                        day.label,
+                        style: TextStyle(
+                          color:
+                              day.isToday
+                                  ? darkGreen
+                                  : const Color(
+                                      0xFF7A8C84,
+                                    ),
+                          fontSize: 11,
+                          fontWeight:
+                              day.isToday
+                                  ? FontWeight
+                                      .w800
+                                  : FontWeight
+                                      .w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            },
+          ).toList(),
         ),
       ),
     );
   }
 
   Widget _buildContributionCard(
-    List<_CategoryContribution> contributions,
+    List<_CategoryContribution>
+        contributions,
   ) {
     if (contributions.isEmpty) {
       return _buildEmptyCard(
-        icon: Icons.pie_chart_outline_rounded,
+        icon:
+            Icons.pie_chart_outline_rounded,
         title: 'No growth data yet',
         message:
-            'Create records to see which areas of your life are contributing to your growth.',
+            'Create records to see which areas of your life are helping your tree grow.',
       );
     }
 
-    final total = contributions.fold<int>(
+    final total =
+        contributions.fold<int>(
       0,
-      (sum, item) => sum + item.points,
+      (sum, item) =>
+          sum + item.points,
     );
 
     return Container(
@@ -633,101 +504,129 @@ class GrowthPage extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: softBorder,
         ),
       ),
       child: Column(
-        children: contributions.map((item) {
-          final progress =
-              total == 0 ? 0.0 : item.points / total;
+        children:
+            contributions.map(
+          (item) {
+            final progress =
+                total == 0
+                    ? 0.0
+                    : item.points /
+                        total;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 9,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: item.color.withValues(
-                      alpha: 0.14,
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(
+                vertical: 9,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration:
+                        BoxDecoration(
+                      color: item.color
+                          .withValues(
+                        alpha: 0.14,
+                      ),
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        13,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(
-                      13,
+                    child: Icon(
+                      item.icon,
+                      color: item.color,
+                      size: 21,
                     ),
                   ),
-                  child: Icon(
-                    item.icon,
-                    color: item.color,
-                    size: 21,
+
+                  const SizedBox(
+                    width: 13,
                   ),
-                ),
 
-                const SizedBox(width: 13),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.label,
-                              style: const TextStyle(
-                                color: darkGreen,
-                                fontSize: 14,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                style:
+                                    const TextStyle(
+                                  color:
+                                      darkGreen,
+                                  fontSize:
+                                      14,
+                                  fontWeight:
+                                      FontWeight
+                                          .w700,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${item.points} pts',
+                              style:
+                                  const TextStyle(
+                                color: Color(
+                                  0xFF6B7D75,
+                                ),
+                                fontSize:
+                                    12,
                                 fontWeight:
-                                    FontWeight.w700,
+                                    FontWeight
+                                        .w600,
                               ),
                             ),
+                          ],
+                        ),
+
+                        const SizedBox(
+                          height: 7,
+                        ),
+
+                        ClipRRect(
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            10,
                           ),
-                          Text(
-                            '${item.points} pts',
-                            style: const TextStyle(
-                              color: Color(
-                                0xFF6B7D75,
-                              ),
-                              fontSize: 12,
-                              fontWeight:
-                                  FontWeight.w600,
+                          child:
+                              LinearProgressIndicator(
+                            value:
+                                progress,
+                            minHeight: 7,
+                            backgroundColor:
+                                const Color(
+                              0xFFF0F4F2,
+                            ),
+                            valueColor:
+                                AlwaysStoppedAnimation<
+                                    Color>(
+                              item.color,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(
-                          10,
                         ),
-                        child:
-                            LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 7,
-                          backgroundColor:
-                              const Color(
-                            0xFFF0F4F2,
-                          ),
-                          valueColor:
-                              AlwaysStoppedAnimation<
-                                  Color>(
-                            item.color,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+                ],
+              ),
+            );
+          },
+        ).toList(),
       ),
     );
   }
@@ -749,7 +648,8 @@ class GrowthPage extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: softBorder,
         ),
@@ -758,16 +658,19 @@ class GrowthPage extends StatelessWidget {
         children: List.generate(
           records.length,
           (index) {
-            final record = records[index];
+            final record =
+                records[index];
 
-            final visual = _categoryVisual(
+            final visual =
+                _categoryVisual(
               record.category,
             );
 
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                      const EdgeInsets.symmetric(
                     vertical: 8,
                   ),
                   child: Row(
@@ -775,48 +678,72 @@ class GrowthPage extends StatelessWidget {
                       Container(
                         width: 42,
                         height: 42,
-                        decoration: BoxDecoration(
-                          color: visual.color.withValues(
-                            alpha: 0.14,
+                        decoration:
+                            BoxDecoration(
+                          color:
+                              visual.color
+                                  .withValues(
+                            alpha:
+                                0.14,
                           ),
                           borderRadius:
-                              BorderRadius.circular(
+                              BorderRadius
+                                  .circular(
                             13,
                           ),
                         ),
                         child: Icon(
                           visual.icon,
-                          color: visual.color,
+                          color:
+                              visual.color,
                           size: 21,
                         ),
                       ),
 
-                      const SizedBox(width: 13),
+                      const SizedBox(
+                        width: 13,
+                      ),
 
                       Expanded(
                         child: Column(
                           crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              CrossAxisAlignment
+                                  .start,
                           children: [
                             Text(
                               record.title,
-                              style: const TextStyle(
-                                color: darkGreen,
-                                fontSize: 14,
+                              maxLines: 1,
+                              overflow:
+                                  TextOverflow
+                                      .ellipsis,
+                              style:
+                                  const TextStyle(
+                                color:
+                                    darkGreen,
+                                fontSize:
+                                    14,
                                 fontWeight:
-                                    FontWeight.w700,
+                                    FontWeight
+                                        .w700,
                               ),
                             ),
-                            const SizedBox(height: 3),
+
+                            const SizedBox(
+                              height: 3,
+                            ),
+
                             Text(
                               _formatRecordDate(
-                                record.createdAt,
+                                record
+                                    .createdAt,
                               ),
-                              style: const TextStyle(
+                              style:
+                                  const TextStyle(
                                 color: Color(
                                   0xFF85958E,
                                 ),
-                                fontSize: 11,
+                                fontSize:
+                                    11,
                               ),
                             ),
                           ],
@@ -824,24 +751,32 @@ class GrowthPage extends StatelessWidget {
                       ),
 
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
                           horizontal: 10,
                           vertical: 6,
                         ),
-                        decoration: BoxDecoration(
-                          color: lightGreen,
+                        decoration:
+                            BoxDecoration(
+                          color:
+                              lightGreen,
                           borderRadius:
-                              BorderRadius.circular(
+                              BorderRadius
+                                  .circular(
                             14,
                           ),
                         ),
                         child: Text(
                           '+${record.growthPoints}',
-                          style: const TextStyle(
-                            color: darkGreen,
+                          style:
+                              const TextStyle(
+                            color:
+                                darkGreen,
                             fontSize: 12,
                             fontWeight:
-                                FontWeight.w800,
+                                FontWeight
+                                    .w800,
                           ),
                         ),
                       ),
@@ -849,7 +784,8 @@ class GrowthPage extends StatelessWidget {
                   ),
                 ),
 
-                if (index != records.length - 1)
+                if (index !=
+                    records.length - 1)
                   const Divider(
                     color: softBorder,
                   ),
@@ -868,13 +804,15 @@ class GrowthPage extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 24,
         vertical: 36,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: softBorder,
         ),
@@ -892,15 +830,19 @@ class GrowthPage extends StatelessWidget {
             style: const TextStyle(
               color: darkGreen,
               fontSize: 17,
-              fontWeight: FontWeight.w700,
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
           const SizedBox(height: 7),
           Text(
             message,
-            textAlign: TextAlign.center,
+            textAlign:
+                TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF6B7D75),
+              color: Color(
+                0xFF6B7D75,
+              ),
               fontSize: 13,
               height: 1.4,
             ),
@@ -924,7 +866,8 @@ class GrowthPage extends StatelessWidget {
         .fold<int>(
           0,
           (sum, record) =>
-              sum + record.growthPoints,
+              sum +
+              record.growthPoints,
         );
   }
 
@@ -939,18 +882,21 @@ class GrowthPage extends StatelessWidget {
       now.day,
     );
 
-    final days = <_DayGrowth>[];
+    final days =
+        <_DayGrowth>[];
 
     for (var offset = 6;
         offset >= 0;
         offset--) {
-      final date = today.subtract(
+      final date =
+          today.subtract(
         Duration(
           days: offset,
         ),
       );
 
-      final points = _growthForDate(
+      final points =
+          _growthForDate(
         records,
         date,
       );
@@ -961,7 +907,8 @@ class GrowthPage extends StatelessWidget {
             date.weekday,
           ),
           points: points,
-          isToday: offset == 0,
+          isToday:
+              offset == 0,
         ),
       );
     }
@@ -979,7 +926,8 @@ class GrowthPage extends StatelessWidget {
     final consistencyScore =
         (activeDays / 7) * 30;
 
-    return (growthScore + consistencyScore)
+    return (growthScore +
+            consistencyScore)
         .round()
         .clamp(
           0,
@@ -989,26 +937,28 @@ class GrowthPage extends StatelessWidget {
 
   List<_CategoryContribution>
       _buildCategoryContributions(
-    Map<RecordCategory, int> categoryGrowth,
+    Map<RecordCategory, int>
+        categoryGrowth,
   ) {
     final list =
         <_CategoryContribution>[];
 
     for (final entry
         in categoryGrowth.entries) {
-      if (entry.key == RecordCategory.memory ||
-          entry.key == RecordCategory.other) {
+      if (entry.value <= 0) {
         continue;
       }
 
-      final visual = _categoryVisual(
+      final visual =
+          _categoryVisual(
         entry.key,
       );
 
       list.add(
         _CategoryContribution(
           label:
-              InsightService.instance.categoryName(
+              InsightService.instance
+                  .categoryName(
             entry.key,
           ),
           points: entry.value,
@@ -1020,7 +970,9 @@ class GrowthPage extends StatelessWidget {
 
     list.sort(
       (a, b) =>
-          b.points.compareTo(a.points),
+          b.points.compareTo(
+        a.points,
+      ),
     );
 
     return list;
@@ -1045,95 +997,7 @@ class GrowthPage extends StatelessWidget {
       return 'You have started growing this week. Keep going.';
     }
 
-    return 'Your next action can start this week’s growth.';
-  }
-
-  _GrowthStageData _growthStage(
-    int points,
-  ) {
-    if (points >= 60) {
-      return const _GrowthStageData(
-        level: 5,
-        name: 'Thriving Tree',
-        description:
-            'Your habits have grown into a strong and thriving tree.',
-        icon: Icons.park_rounded,
-        progress: 1,
-        nextStageName: 'Thriving Tree',
-        pointsRemaining: 0,
-        isMaxLevel: true,
-      );
-    }
-
-    if (points >= 30) {
-      return _GrowthStageData(
-        level: 4,
-        name: 'Growing Tree',
-        description:
-            'Your consistent actions are becoming lasting growth.',
-        icon: Icons.park_outlined,
-        progress:
-            ((points - 30) / 30).clamp(
-          0.0,
-          1.0,
-        ),
-        nextStageName: 'Thriving Tree',
-        pointsRemaining: 60 - points,
-        isMaxLevel: false,
-      );
-    }
-
-    if (points >= 15) {
-      return _GrowthStageData(
-        level: 3,
-        name: 'Young Tree',
-        description:
-            'Your progress is becoming visible and stronger.',
-        icon: Icons.eco_rounded,
-        progress:
-            ((points - 15) / 15).clamp(
-          0.0,
-          1.0,
-        ),
-        nextStageName: 'Growing Tree',
-        pointsRemaining: 30 - points,
-        isMaxLevel: false,
-      );
-    }
-
-    if (points >= 5) {
-      return _GrowthStageData(
-        level: 2,
-        name: 'Sprout',
-        description:
-            'Your small actions are beginning to take root.',
-        icon: Icons.spa_rounded,
-        progress:
-            ((points - 5) / 10).clamp(
-          0.0,
-          1.0,
-        ),
-        nextStageName: 'Young Tree',
-        pointsRemaining: 15 - points,
-        isMaxLevel: false,
-      );
-    }
-
-    return _GrowthStageData(
-      level: 1,
-      name: 'Seed',
-      description:
-          'Every meaningful record helps your future begin to grow.',
-      icon: Icons.grass_rounded,
-      progress:
-          (points / 5).clamp(
-        0.0,
-        1.0,
-      ),
-      nextStageName: 'Sprout',
-      pointsRemaining: 5 - points,
-      isMaxLevel: false,
-    );
+    return 'Your next meaningful action can start this week’s growth.';
   }
 
   bool _sameDate(
@@ -1158,13 +1022,15 @@ class GrowthPage extends StatelessWidget {
       'Sun',
     ];
 
-    return values[weekday - 1];
+    return values[
+        weekday - 1];
   }
 
   String _formatRecordDate(
     DateTime date,
   ) {
-    final now = DateTime.now();
+    final now =
+        DateTime.now();
 
     if (_sameDate(
       date,
@@ -1173,8 +1039,11 @@ class GrowthPage extends StatelessWidget {
       return 'Today • ${_formatTime(date)}';
     }
 
-    final yesterday = now.subtract(
-      const Duration(days: 1),
+    final yesterday =
+        now.subtract(
+      const Duration(
+        days: 1,
+      ),
     );
 
     if (_sameDate(
@@ -1190,22 +1059,28 @@ class GrowthPage extends StatelessWidget {
   String _formatTime(
     DateTime date,
   ) {
-    final hour = date.hour;
+    final hour =
+        date.hour;
 
     final minute =
-        date.minute.toString().padLeft(
+        date.minute
+            .toString()
+            .padLeft(
               2,
               '0',
             );
 
     final period =
-        hour >= 12 ? 'PM' : 'AM';
+        hour >= 12
+            ? 'PM'
+            : 'AM';
 
-    final displayHour = hour == 0
-        ? 12
-        : hour > 12
-            ? hour - 12
-            : hour;
+    final displayHour =
+        hour == 0
+            ? 12
+            : hour > 12
+                ? hour - 12
+                : hour;
 
     return '$displayHour:$minute $period';
   }
@@ -1216,70 +1091,88 @@ class GrowthPage extends StatelessWidget {
     switch (category) {
       case RecordCategory.mood:
         return const _CategoryVisual(
-          icon:
-              Icons.sentiment_satisfied_alt_rounded,
-          color: Color(0xFFFFB85C),
+          icon: Icons
+              .sentiment_satisfied_alt_rounded,
+          color:
+              Color(0xFFFFB85C),
         );
 
       case RecordCategory.sleep:
         return const _CategoryVisual(
-          icon: Icons.bedtime_outlined,
-          color: Color(0xFF7A91E8),
+          icon:
+              Icons.bedtime_outlined,
+          color:
+              Color(0xFF7A91E8),
         );
 
       case RecordCategory.work:
         return const _CategoryVisual(
-          icon: Icons.work_outline_rounded,
-          color: Color(0xFF70A8F5),
+          icon: Icons
+              .work_outline_rounded,
+          color:
+              Color(0xFF70A8F5),
         );
 
       case RecordCategory.study:
         return const _CategoryVisual(
-          icon: Icons.menu_book_rounded,
-          color: Color(0xFFA78BF0),
+          icon:
+              Icons.menu_book_rounded,
+          color:
+              Color(0xFFA78BF0),
         );
 
       case RecordCategory.finance:
         return const _CategoryVisual(
-          icon:
-              Icons.account_balance_wallet_outlined,
-          color: Color(0xFF64CFA1),
+          icon: Icons
+              .account_balance_wallet_outlined,
+          color:
+              Color(0xFF64CFA1),
         );
 
       case RecordCategory.health:
         return const _CategoryVisual(
-          icon: Icons.favorite_border_rounded,
-          color: Color(0xFFFF8A8A),
+          icon: Icons
+              .favorite_border_rounded,
+          color:
+              Color(0xFFFF8A8A),
         );
 
       case RecordCategory.exercise:
         return const _CategoryVisual(
-          icon: Icons.directions_run_rounded,
-          color: Color(0xFFFF9F68),
+          icon: Icons
+              .directions_run_rounded,
+          color:
+              Color(0xFFFF9F68),
         );
 
       case RecordCategory.water:
         return const _CategoryVisual(
-          icon: Icons.water_drop_outlined,
-          color: Color(0xFF62B8F6),
+          icon: Icons
+              .water_drop_outlined,
+          color:
+              Color(0xFF62B8F6),
         );
 
       case RecordCategory.memory:
         return const _CategoryVisual(
-          icon: Icons.photo_album_outlined,
-          color: Color(0xFFE58BC8),
+          icon: Icons
+              .photo_album_outlined,
+          color:
+              Color(0xFFE58BC8),
         );
 
       case RecordCategory.other:
         return const _CategoryVisual(
-          icon: Icons.auto_awesome_rounded,
+          icon:
+              Icons.auto_awesome_rounded,
           color: mintGreen,
         );
     }
   }
 }
 
-class _GrowthMetric extends StatelessWidget {
+class _GrowthMetric
+    extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
@@ -1291,7 +1184,9 @@ class _GrowthMetric extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Column(
       crossAxisAlignment:
           CrossAxisAlignment.start,
@@ -1301,16 +1196,21 @@ class _GrowthMetric extends StatelessWidget {
           color: Colors.white,
           size: 20,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(
+          height: 6,
+        ),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontWeight:
+                FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(
+          height: 2,
+        ),
         Text(
           label,
           style: const TextStyle(
@@ -1321,75 +1221,6 @@ class _GrowthMetric extends StatelessWidget {
       ],
     );
   }
-}
-
-class _TreeMetricCard extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _TreeMetricCard({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 15,
-      ),
-      decoration: BoxDecoration(
-        color: GrowthPage.lightGreen,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF7A8C84),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: GrowthPage.darkGreen,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GrowthStageData {
-  final int level;
-  final String name;
-  final String description;
-  final IconData icon;
-  final double progress;
-  final String nextStageName;
-  final int pointsRemaining;
-  final bool isMaxLevel;
-
-  const _GrowthStageData({
-    required this.level,
-    required this.name,
-    required this.description,
-    required this.icon,
-    required this.progress,
-    required this.nextStageName,
-    required this.pointsRemaining,
-    required this.isMaxLevel,
-  });
 }
 
 class _DayGrowth {
